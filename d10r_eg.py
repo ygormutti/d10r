@@ -37,50 +37,129 @@ class ArquivoError(Exception):
 
 class Cronometro(threading.Thread):
     '''Implementação da função cronometrar() com threads.'''
-    def __init__(self, fim=None):
-        threading.Thread.__init__(self)
-        self.fim = fim
+    def __init__(self, fim=None, h=False):
+        super(Cronometro, self).__init__()
+        if h:
+            self.fim = fim * 3600
+        else:
+            self.fim = fim
         self._decorrido = 0
         self._pausado = False
         self._parado = False
+
     def run(self):
         while True:
             if self.fim != None and self.decorrido >= self.fim:
+                self._decorrido = self.fim
                 self.parar()
+                raise FimAlcancadoWarning
             if self._parado:
                 break
             time.sleep(1)
             if not self._pausado:
                 self._decorrido += 1
+
     def pausar(self):
         '''Pausa o cronômetro ou continua a contar, se estiver pausado.'''
         if self._pausado:
             self._pausado = False
         else:
             self._pausado = True
+
     def parar(self):
-        '''Encerra a contagem e finaliza a thread. Retorna o tempo decorrido.'''
+        '''Encerra a contagem e finaliza a thread.'''
         self._parado = True
+
     @property
     def decorrido(self):
         '''Tempo em segundos decorrido desde o início da contagem.'''
         return self._decorrido
+
     @property
     def decorridoh(self):
         '''Mesmo que decorrido, porém retorna o valor em horas.'''
         return self._decorrido / 3600.0
 
-class CronometroFrame(Cronometro, tk.Frame):
+    @property
+    def isparado(self):
+        return self._parado
+
+class CronometroDialog(threading.Thread):
     '''Janela que exibe o nome de uma atividade, o tempo decorrido, o saldo e
-    botões para que o usuário pause ou pare o cronometro.'''
-    def __init__(self, ativ, saldo, fim=None):
-        Cronometro.__init__(self, fim)
-        self.ativ = ativ
-        self.saldo = saldo
-    
+    botões para que o usuário pause ou pare o cronômetro.'''
+
+    def __init__(self, atividade, cronometro, root):
+        super(CronometroDialog, self).__init__()
+        self.atividade = atividade
+        self.cronometro = cronometro
+        self.root = root
+        self.construir()
+
     def run(self):
-        Cronometro.run(self)
+        while True:
+            self.tempoDecorridoLbl.config(text=formatah(
+                -self.cronometro.decorridoh, segundos=True))
+            time.sleep(1)
+            if self.cronometro.isparado:
+                break
+
+    def pararCb(self):
+        self.cronometro.parar()
+        self.root.quit()
+        self.root.destroy()
+
+    def pausarCb(self):
+        self.cronometro.pausar()
+
+    def construir(self):
+        '''Cria a janela com os widgets e configura o label para ser atualizado
+        com o tempo decorrido.'''
+        ### Janela ###
+        self.root.title(TITLE)
+        self.root.protocol('WM_DELETE_WINDOW', self.pararCb)
+        self.root.iconname('Dialog')
+        self.root.minsize(300, 100)
+
+        ### Frames ###
+        labelsFrame = tk.Frame(self.root)
+        labelsFrame.pack()
+
+        buttonsFrame = tk.Frame(self.root)
+        buttonsFrame.pack()
+
+        descricaoFrame = tk.Frame(labelsFrame)
+        descricaoFrame.pack(side='left')
+
+        tempoFrame = tk.Frame(labelsFrame)
+        tempoFrame.pack(side='left')
+
+        ### Labels ###
+        atividadeLabel = tk.Label(descricaoFrame, text='Atividade atual:')
+        atividadeLabel.pack(side='top')
+
+        decorridoLabel = tk.Label(descricaoFrame, text='Tempo decorrido:')
+        decorridoLabel.pack(side='top')
+
+        saldoLabel = tk.Label(descricaoFrame, text='Saldo:')
+        saldoLabel.pack(side='top')
+
+        nomeAtivLbl = tk.Label(tempoFrame, text=self.atividade.nome)
+        nomeAtivLbl.pack(side='top')
+
+        self.tempoDecorridoLbl = tk.Label(tempoFrame,
+                                     text=formatah(-self.cronometro.decorridoh))
+        self.tempoDecorridoLbl.pack(side='top', padx=4)
         
+        tempoDecorridoLbl = self.tempoDecorridoLbl
+
+        tempoSaldoLbl = tk.Label(tempoFrame, text=formatah(self.atividade.saldo))
+        tempoSaldoLbl.pack(side='top')
+
+        pausarBtn = tk.Checkbutton(buttonsFrame, text='Pausar', command=self.pausarCb)
+        pausarBtn.pack(side='left')
+
+        pararBtn = tk.Button(buttonsFrame, text='Parar', command=self.pararCb)
+        pararBtn.pack(side='left')
 
 class Collection(type):
     '''Metaclass used to register classes instances.'''
@@ -124,7 +203,7 @@ class Atividade(object):
     def creditarh(self, toth, nvezes=1):
         '''Método chamado, semanalmente, para creditar horas em atividades, de
         acordo com a qtd. de horas disponíveis.'''
-        self.saldo += (nvezes * (self.pts * (toth*1.0)))
+        self.saldo += (nvezes * (self.pts * (toth * 1.0)))
 
     def debitarh(self, horas):
         '''Diminui o saldo da atividade em horas.'''
@@ -150,14 +229,14 @@ def combinar2(itens):
     for i, p in enumerate(combinacoes):
         combinacoes[i] = tuple(p)
 
-    combinacoes.sort(key=lambda x: x[0]+x[1])
+    combinacoes.sort(key=lambda x: x[0] + x[1])
     return combinacoes
 
 def init():
     '''Inicializa o arquivo de configuração do d10r.'''
     notificar('Obrigado por usar o d10r (este programa que vos fala).\n' +
-              'A seguir eu farei algumas perguntas para que eu possa te ajudar'+
-              ' a gerenciar o tempo que você deve gastar com cada atividade da'+
+              'A seguir eu farei algumas perguntas para que eu possa te ajudar' +
+              ' a gerenciar o tempo que você deve gastar com cada atividade da' +
               ' sua rotina. Muita produtividade pra você!')
     atividades = ler_atividades()
     pares = combinar2(atividades)
@@ -177,7 +256,7 @@ def init():
 
     toth = int(entrar('Quantas horas semanais você deseja administrar?'))
     if not toth:
-        notificar('Se não é pra administrar horas, pra quê você me quer? =|'+
+        notificar('Se não é pra administrar horas, pra quê você me quer? =|' +
                   '\nTchau!')
         raise SystemExit(1)
 
@@ -191,7 +270,7 @@ def init():
             notificar('Atividade %s ignorada.' % (HEADER))
 
 
-    salvar_config(toth, datetime.date.today().isoweekday(),0)
+    salvar_config(toth, datetime.date.today().isoweekday(), 0)
 
     notificar('Configurações salvas com sucesso.')
     # TODO: aproveitar os saldos de atividades com nomes coincidentes
@@ -222,8 +301,8 @@ def parse_config():
 
         for a in parser.sections():
             if a != HEADER:
-                kwargs = {'nome':a, 'pts':parser.getfloat(a,'pts'),
-                          'saldo':parser.getfloat(a,'saldo')}
+                kwargs = {'nome':a, 'pts':parser.getfloat(a, 'pts'),
+                          'saldo':parser.getfloat(a, 'saldo')}
                 Atividade(**kwargs)
     except TypeError:
         raise ArquivoError('Arquivo de configuração corrompido.')
@@ -282,7 +361,7 @@ def dias_x_entre(dia, antes, depois):
         n += 1
     return n
 
-def creditar_tudo(toth,inicio,timestamp):
+def creditar_tudo(toth, inicio, timestamp):
     '''Verifica se existem horas a serem creditadas nas atividades e credita-as.'''
     if timestamp == 0: # primeira execução após init
         vezes = 1
@@ -295,15 +374,24 @@ def creditar_tudo(toth,inicio,timestamp):
         	vezes -= 1
     for a in Atividade.__all__():
         a.creditarh(toth, vezes)
-    
+
     return bool(vezes)
 
-def formatah(horas):
-    '''Recebe uma quantidade de horas como float e retorna uma string HH:MM.'''
-    sinal = '-' if (horas < 0) else '+'
-    minutos = int(abs(horas) * 60)
-    horas, minutos = divmod(minutos, 60)
-    return '%s%d:%02d' % (sinal, horas, minutos)
+def formatah(horas, segundos=False, sinal=True):
+    '''formatah(horas, segundos=False, sinal=True) -> '[+-]HH:MM[:SS]'
+    
+    Recebe uma quantidade de horas como float e retorna uma string HH:MM.'''
+    if sinal:
+        sinal = '-' if (horas < 0) else '+'
+    else:
+        sinal = ''
+    s = abs(horas) * 3600.0
+    m, s = divmod(s, 60.0)
+    h, m = divmod(m, 60.0)
+    if segundos:
+        return '%s%d:%02d:%02d' % (sinal, int(h), int(m), int(s))
+    else:
+        return '%s%d:%02d' % (sinal, int(h), int(m))
 
 def escolher_ativ():
     '''Exibe as atividades cadastradas, o saldo de horas e espera que o usuário
@@ -311,7 +399,7 @@ def escolher_ativ():
     atividades = sorted(Atividade.__all__(), key=lambda x: x.saldo, reverse=True)
 
     opcoes = []
-    for i,a in enumerate(atividades):
+    for i, a in enumerate(atividades):
         opcoes.append('%d- %s (Saldo: %s)' % (i, a.nome, formatah(a.saldo)))
 
     opcao = escolher('Qual atividade deseja iniciar?', opcoes)
@@ -357,13 +445,13 @@ def notificar(msg):
 def perguntar(pergunta):
     '''Exibe uma janela com uma pergunta do tipo sim ou não e retorna a resposta
     como bool.'''
-    return bool(eg.ynbox(pergunta,TITLE))
+    return bool(eg.ynbox(pergunta, TITLE))
 
 
 def entrar(msg):
     '''Exibe uma janela com a mensagem em msg e uma caixa de texto para que o
     usuário informe alguma string.'''
-    return eg.enterbox(msg,TITLE)
+    return eg.enterbox(msg, TITLE)
 
 def ler_atividades():
     '''ler_atividades(msg) -> lista de entradas
@@ -396,15 +484,15 @@ def escolher(msg, opcoes):
     e retorna a opção escolhida.'''
     return eg.choicebox(msg, TITLE, opcoes)
 
-def menu(msg,botoes):
+def menu(msg, botoes):
     '''Exibe uma janela com uma mensagem e vários botões, retornando o texto
     contido no botão pressionado pelo usuário.'''
-    return eg.buttonbox(msg,TITLE,botoes)
+    return eg.buttonbox(msg, TITLE, botoes)
 
 def escolher_arquivo(msg, extensao):
     '''Exibe uma janela para que o usuário escolha um arquivo e retorna o path
     completo para o arquivo escolhido.'''
-    return eg.fileopenbox(msg, TITLE, '*.'+extensao)
+    return eg.fileopenbox(msg, TITLE, '*.' + extensao)
 
 def menu_cfg(msg):
     botoes = ('Novo', 'Procurar', 'Sair')
@@ -420,7 +508,7 @@ O que deseja fazer?
     if botao == botoes[0]:
         init()
     elif botao == botoes[1]:
-        caminho = escolher_arquivo('Escolha o arquivo desejado','cfg')
+        caminho = escolher_arquivo('Escolha o arquivo desejado', 'cfg')
         if caminho:
             shutil.copy2(caminho, CONFIG)
             notificar('Arquivo copiado com sucesso!')
@@ -441,16 +529,23 @@ def main():
 
     while True:
     	if (not timestamp) or (datetime.date.today() > timestamp):
-			if creditar_tudo(toth,inicio,timestamp):
+			if creditar_tudo(toth, inicio, timestamp):
 			    # guarda a data do último crédito
 			    timestamp = datetime.date.today()
-    	
+
         debito = 0
         try:
             atividade = escolher_ativ()
 
             if atividade.saldo > 0:
-                debito = cronometrarh(atividade.saldo)
+                # TODO: transformar estas linhas em uma função
+                root = tk.Tk()
+                cron = Cronometro(atividade.saldo, True)
+                d = CronometroDialog(atividade, cron, root)
+                cron.start()
+                d.start()
+                root.mainloop()
+                debito = cron.decorridoh
             else:
                 if perguntar('Esta atividade não possui mais horas a serem' +
                              ' cumpridas.\nDeseja continuar mesmo assim?'):
@@ -459,7 +554,7 @@ def main():
             debito = atividade.saldo
             notificar('Você acabou de cumprir as horas da atividade:\n' +
                       atividade.nome)
-        except AttributeError: # usuário clicou em Sair
+        except AttributeError, e: # usuário clicou em Sair, ou não :S
             break
         finally:
             if debito and perguntar('Confirma %s horas gastas com %s?' %

@@ -1,1 +1,32 @@
-TODO
+________________________________________________________________________________
+
+                 d10r - Um utilitário para pessoas enroladas
+________________________________________________________________________________
+
+Autor: Ygor Mutti <ygormutti@dcc.ufba.br>
+Versão 0.1alpha
+
+Para informações sobre licenciamento veja o arquivo COPYING.
+________________________________________________________________________________
+
+§ 1. O que é?
+
+O d10r é um programa multiplataforma feito em Python e Tkinter que permite que
+você defina atividades, quanto tempo tem disponível para realizá-las e atribua
+prioridades a elas, de acordo com as suas respostas a um questionário.
+
+Feito isso, o d10r calcula por quanto tempo você deve se ocupar com esta
+atividade semanalmente e conta o tempo que você já ocupou.
+________________________________________________________________________________
+
+§ 2. Como utilizar?
+
+É preciso ter o Python versão 2.6.x instalado e a biblioteca Tkinter (python-tk).
+
+Faça o download do programa em:
+
+- http://github.com/mamutti/d10r/downloads
+
+Descompacte o arquivo em qualquer pasta, mantendo os arquivos descompactados na
+mesma pasta, e execute o arquivo d10r.py.
+________________________________________________________________________________

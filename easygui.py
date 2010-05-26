@@ -18,6 +18,11 @@ two may conflict, with the unpredictable results. If you find that you have
 problems, try running your program outside of IDLE.
 
 Note that EasyGui requires Tk release 8.0 or greater.
+
+Derivado do código disponível em http://easygui.sourceforge.net/ por Steve Ferg
+
+Copyright (C) 2010  Ygor Mutti
+Licenciado sob GPLv3, com texto disponível no arquivo COPYING
 """
 egversion = __doc__.split()[1]
 

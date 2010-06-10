@@ -99,7 +99,7 @@ class CronometroDialog:
         self.construir()
 
     def start(self):
-        if not self.cronometro.is_alive():
+        if not self.cronometro.isAlive():
             self.cronometro.start()
         self._refresh()
     

@@ -16,10 +16,11 @@ Licenciado sob GPLv3, com texto disponível no arquivo COPYING
 __author__ = 'Ygor Mutti <ygormutti@dcc.ufba.br>'
 __version__ = '0.1alpha'
 
-from ConfigParser import SafeConfigParser
+from ConfigParser import SafeConfigParser, NoSectionError
 import os
 import time
 import shutil
+import codecs
 import datetime
 import threading
 import easygui as eg
@@ -28,6 +29,7 @@ import Tkinter as tk
 CONFIG = os.path.expanduser('~/.d10r')
 HEADER = '__header__'
 TITLE = 'd10r'
+ENCODING = 'utf-8'
 
 class FimAlcancadoWarning(Warning):
     pass
@@ -52,7 +54,6 @@ class Cronometro(threading.Thread):
             if self.fim != None and self.decorrido >= self.fim:
                 self._decorrido = self.fim
                 self.parar()
-                raise FimAlcancadoWarning
             if self._parado:
                 break
             time.sleep(1)
@@ -84,12 +85,11 @@ class Cronometro(threading.Thread):
     def isparado(self):
         return self._parado
 
-class CronometroDialog(threading.Thread):
+class CronometroDialog:
     '''Janela que exibe o nome de uma atividade, o tempo decorrido, o saldo e
     botões para que o usuário pause ou pare o cronômetro.'''
-
+    __refresh_time = 200
     def __init__(self, atividade, root, parar=True):
-        super(CronometroDialog, self).__init__()
         self.atividade = atividade
         if parar:
             self.cronometro = Cronometro(atividade.saldo, True)
@@ -98,19 +98,26 @@ class CronometroDialog(threading.Thread):
         self.root = root
         self.construir()
 
-    def run(self):
-        self.cronometro.start()
-        while True:
-            self.tempoDecorridoLbl.config(text=formatah(
-                -self.cronometro.decorridoh, segundos=True))
-            time.sleep(1)
-            if self.cronometro.isparado:
-                break
+    def start(self):
+        if not self.cronometro.is_alive():
+            self.cronometro.start()
+        self._refresh()
+    
+    def _refresh(self):
+        self.tempoDecorridoLbl.config(text=formatah(-self.cronometro.decorridoh,
+                                      segundos=True))
+        if not self.cronometro.isparado:
+            self.tempoDecorridoLbl.after(self.__refresh_time, self._refresh)
+        else:
+            self.fechar()
+
+    def fechar(self):
+        self.root.quit()
+        self.root.destroy()
 
     def pararCb(self):
         self.cronometro.parar()
-        self.root.quit()
-        self.root.destroy()
+        self.fechar()
 
     def pausarCb(self):
         self.cronometro.pausar()
@@ -119,54 +126,94 @@ class CronometroDialog(threading.Thread):
         '''Cria a janela com os widgets e configura o label para ser atualizado
         com o tempo decorrido.'''
         ### Janela ###
-        self.root.title(TITLE)
+        self.root.title('%s - Atividade: %s' % (TITLE, self.atividade.nome))
         self.root.protocol('WM_DELETE_WINDOW', self.pararCb)
-        self.root.iconname('Dialog')
-        self.root.minsize(300, 100)
+        self.root.iconname(TITLE)
+        self.root.wm_attributes('-topmost', 1)
 
         ### Frames ###
-        labelsFrame = tk.Frame(self.root)
-        labelsFrame.pack(expand=True, fill='both')
-
-        buttonsFrame = tk.Frame(self.root)
-        buttonsFrame.pack(expand=True)
-
-        descricaoFrame = tk.Frame(labelsFrame)
-        descricaoFrame.pack(side='left', expand=True, fill='both')
-
-        tempoFrame = tk.Frame(labelsFrame)
-        tempoFrame.pack(side='right', expand=True, fill='both')
+        
+        mainFrame = tk.Frame(self.root)
+        mainFrame.pack()
 
         ### Labels ###
-        atividadeLabel = tk.Label(descricaoFrame, text='Atividade atual:',
-                                  justify='left')
-        atividadeLabel.pack(side='top', expand=True)
+        
+        atividadeLabel = tk.Label(mainFrame, text='Decorrido/Saldo: ', justify='left')
+        atividadeLabel.pack(side='left', expand=True)
 
-        decorridoLabel = tk.Label(descricaoFrame, text='Tempo decorrido:',
-                                  justify='left')
-        decorridoLabel.pack(side='top', expand=True)
+        self.tempoDecorridoLbl = tk.Label(mainFrame,
+                                 text=formatah(self.cronometro.decorridoh, True, False))
+        self.tempoDecorridoLbl.pack(side='left', expand=True)
+        
+        tempoSaldoLbl = tk.Label(mainFrame,
+                                 text='/ ' + formatah(self.atividade.saldo, False, True))
+        tempoSaldoLbl.pack(side='left', expand=True)
 
-        saldoLabel = tk.Label(descricaoFrame, text='Saldo:', justify='left')
-        saldoLabel.pack(side='top', expand=True)
-
-        nomeAtivLbl = tk.Label(tempoFrame, text=self.atividade.nome,
-                               justify='right')
-        nomeAtivLbl.pack(side='top', padx=4, expand=True)
-
-        self.tempoDecorridoLbl = tk.Label(tempoFrame,
-                                 text=formatah(-self.cronometro.decorridoh, True),
-                                 justify='right')
-        self.tempoDecorridoLbl.pack(side='top', padx=4, expand=True)
-
-        tempoSaldoLbl = tk.Label(tempoFrame, text=formatah(self.atividade.saldo),
-                                 justify='right')
-        tempoSaldoLbl.pack(side='top', padx=4, expand=True)
-
-        pausarBtn = tk.Checkbutton(buttonsFrame, text='Pausar', command=self.pausarCb)
+        ### Buttons ###
+        pausarBtn = tk.Checkbutton(mainFrame, text='Pausar', command=self.pausarCb)
         pausarBtn.pack(side='left')
 
-        pararBtn = tk.Button(buttonsFrame, text='Parar', command=self.pararCb)
+        pararBtn = tk.Button(mainFrame, text='Finalizar', command=self.pararCb)
         pararBtn.pack(side='left')
+
+class HoraSpinDialog:
+    def __init__(self, msg):
+        self.msg = msg
+        self.construir()
+        self.root.mainloop()
+
+    def get(self):
+        try:
+            return (self.horas, self.minutos, self.segundos)
+        except NameError:
+            return None
+
+    def construir(self):
+        self.root = tk.Tk()
+        self.root.protocol('WM_DELETE_WINDOW', self.fechar)
+
+        msglbl = tk.Label(self.root, text=self.msg)
+        msglbl.pack()
+
+        formframe = tk.Frame(self.root)
+        formframe.pack()
+
+        lblsframe = tk.Frame(formframe)
+        lblsframe.pack(side='left')
+
+        spinsframes = tk.Frame(formframe)
+        spinsframes.pack(side='left')
+
+        horalbl = tk.Label(lblsframe, text='Horas: ')
+        horalbl.pack()
+
+        minutolbl = tk.Label(lblsframe, text='Minutos: ')
+        minutolbl.pack()
+
+        segundolbl = tk.Label(lblsframe, text='Segundos: ')
+        segundolbl.pack()
+
+        self._horaspn = tk.Spinbox(spinsframes, values=range(100))
+        self._horaspn.pack()
+
+        self._minutospn = tk.Spinbox(spinsframes, values=range(100))
+        self._minutospn.pack()
+
+        self._segundospn = tk.Spinbox(spinsframes, values=range(100))
+        self._segundospn.pack()        
+
+        okbtn = tk.Button(self.root, text='OK', command=self.okbtn_cb)
+        okbtn.pack()
+
+    def okbtn_cb(self):
+        self.horas = int(self._horaspn.get())
+        self.minutos = int(self._minutospn.get())
+        self.segundos = int(self._segundospn.get())
+        self.fechar()
+
+    def fechar(self):
+        self.root.quit()
+        self.root.destroy()
 
 class Collection(type):
     '''Metaclass used to register classes instances.'''
@@ -194,7 +241,6 @@ class Collection(type):
         obj = super(Collection, cls).__call__(*args, **kwargs)
         cls.__all.append(obj)
         return obj
-
 
 class Atividade(object):
     __metaclass__ = Collection
@@ -261,7 +307,7 @@ def init():
                 raise SystemExit(1)
             prioridades[opcao] += 1
 
-    toth = int(entrar('Quantas horas semanais você deseja administrar?'))
+    toth = entrar('Quantas horas semanais você deseja administrar?', True)
     if not toth:
         notificar('Se não é pra administrar horas, pra quê você me quer? =|' +
                   '\nTchau!')
@@ -293,7 +339,9 @@ def parse_config():
     horas, além de instanciar as atividades.'''
     parser = SafeConfigParser()
 
-    if not parser.read(CONFIG):
+    try:
+        parser.readfp(codecs.open(CONFIG, 'r', ENCODING))
+    except IOError:
         raise ArquivoError('Nenhum arquivo de configuração encontrado.')
 
     try:
@@ -311,7 +359,7 @@ def parse_config():
                 kwargs = {'nome':a, 'pts':parser.getfloat(a, 'pts'),
                           'saldo':parser.getfloat(a, 'saldo')}
                 Atividade(**kwargs)
-    except TypeError:
+    except (TypeError, NoSectionError):
         raise ArquivoError('Arquivo de configuração corrompido.')
 
     return (toth, inicio, timestamp)
@@ -346,7 +394,7 @@ def salvar_config(toth, inicio, timestamp):
     parser.set(HEADER, 'inicio', `inicio`)
     parser.set(HEADER, 'timestamp', `timestamp`)
 
-    cfg = file(CONFIG, 'w')
+    cfg = codecs.open(CONFIG, 'w', ENCODING)
     parser.write(cfg)
 
 def dias_ate_prox_dia(dia, x):
@@ -423,6 +471,10 @@ def escolher_ativ():
     else:
         return None
 
+def horaspin(msg):
+    h = HoraSpinDialog(msg)
+    return h.get()
+
 def notificar(msg):
     '''Exibe uma janela de diálogo com a mensagem em msg.'''
     eg.msgbox(msg, TITLE)
@@ -435,11 +487,13 @@ def perguntar(pergunta):
     return bool(eg.ynbox(pergunta, TITLE))
 
 
-def entrar(msg):
+def entrar(msg, inteiro=False):
     '''entrar(msg) -> str
     
     Exibe uma janela com a mensagem em msg e uma caixa de texto para que o
     usuário informe alguma string.'''
+    if inteiro:
+        return eg.integerbox(msg, TITLE)
     return eg.enterbox(msg, TITLE)
 
 def ler_atividades():
@@ -450,8 +504,8 @@ def ler_atividades():
     while True:
         msg = 'Informe uma nova atividade ou cancele para continuar.'
         if entradas:
-            complemento = '\nAs seguintes atividades já foram adicionadas:\n'
-            atividades = '\n'.join(['- ' + e for e in entradas])
+            complemento = u'\nAs seguintes atividades já foram adicionadas:\n'
+            atividades = '\n'.join([' - ' + e for e in entradas])
             msg += complemento + atividades
 
         entrada = entrar(msg)
@@ -491,6 +545,7 @@ def menu_cfg(msg):
     '''Exibe um diálogo com opções para procurar e copiar um arquivo de
     configuração do d10r, criar um novo arquivo e sair do programa.'''
     botoes = ('Novo', 'Procurar', 'Sair')
+    global CONFIG
     msg += '''
 
 O que deseja fazer?
@@ -505,8 +560,15 @@ O que deseja fazer?
     elif botao == botoes[1]:
         caminho = escolher_arquivo('Escolha o arquivo desejado', 'cfg')
         if caminho:
-            shutil.copy2(caminho, CONFIG)
-            notificar('Arquivo copiado com sucesso!')
+            if perguntar('O arquivo selecionado está fora do local padrão, ' +
+                         'de forma que o programa sempre perguntará por ele ' +
+                         'quando iniciar. Deseja copiar o arquivo para o local ' +
+                         'padrão?\n\nSe sim, você precisará fazer backup do arquivo ' +
+                         'sempre que for utilizá-lo em outro computador.'):
+                shutil.copy2(caminho, CONFIG)
+                notificar('Arquivo copiado com sucesso!')
+            else:
+                CONFIG = caminho
         else:
             notificar('Preciso do arquivo de configuração para continuar!')
     else:
@@ -522,7 +584,24 @@ def cronometro_dialog(atividade, parar=True):
     d = CronometroDialog(atividade, root, parar)
     d.start()
     root.mainloop()
+    if atividade.saldo == d.cronometro.decorridoh:
+        raise FimAlcancadoWarning
     return d.cronometro.decorridoh
+
+def debitar(atividade, parar=True):
+    c = 'Cronômetro'
+    op = menu('Deseja iniciar o cronômetro ou inserir diretamente a quantidade ' +
+              'de horas cumpridas diretamente?', (c, 'Inserir'))
+    
+    if op == c:
+        return cronometro_dialog(atividade, parar)
+    else:
+        try:
+            h, m, s = horaspin('Debitar:')
+            h += (m / 60.0) + (s / 3600.0)
+            return h
+        except TypeError:
+            return 0.0
 
 def main():
     '''Rotina principal do programa.'''
@@ -545,11 +624,11 @@ def main():
             atividade = escolher_ativ()
 
             if atividade.saldo > 0:
-                debito = cronometro_dialog(atividade)
+                debito = debitar(atividade)
             else:
                 if perguntar('Esta atividade não possui mais horas a serem' +
                              ' cumpridas.\nDeseja continuar mesmo assim?'):
-                    debito = cronometro_dialog(atividade, False)
+                    debito = debitar(atividade, False)
         except FimAlcancadoWarning:
             debito = atividade.saldo
             notificar('Você acabou de cumprir as horas da atividade:\n' +

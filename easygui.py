@@ -404,13 +404,13 @@ def integerbox(msg=""
         try:
             reply = int(reply)
         except:
-            msgbox ("The value that you entered:\n\t%s\nis not an integer." % dq(str(reply))
+            msgbox ("O valor que você digitou:\n\t%s\nnão é um número inteiro." % dq(str(reply))
                     , "Error")
             continue
 
         if reply < argLowerBound:
-            msgbox ("The value that you entered is less than the lower bound of "
-                + str(argLowerBound) + ".", "Error")
+            msgbox ("O valor que você informou é menor do que "
+                + str(argLowerBound) + ".", "Erro")
             continue
 
         if reply > argUpperBound:
@@ -891,7 +891,7 @@ def __choicebox(msg
 
     # make sure all choices are strings
     for index in range(len(choices)):
-        choices[index] = str(choices[index])
+        choices[index] = unicode(choices[index])
 
     if buttons:
         if type(buttons) == type("abc"): # user sent a string
@@ -986,7 +986,7 @@ def __choicebox(msg
     # put the choices into the choiceboxWidget
     #---------------------------------------------------
     for index in range(len(choices)):
-        choices[index] == str(choices[index])
+        choices[index] == unicode(choices[index])
 
     if runningPython3:
         choices.sort(key=str.lower)
@@ -1391,8 +1391,8 @@ def getFileDialogTitle(msg
     , title
     ):
     if msg and title: return "%s - %s" % (title,msg)
-    if msg and not title: return str(msg)
-    if title and not msg: return str(title)
+    if msg and not title: return unicode(msg)
+    if title and not msg: return unicode(title)
     return None # no message and no title
 
 #-------------------------------------------------------------------

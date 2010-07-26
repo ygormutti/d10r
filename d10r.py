@@ -126,7 +126,7 @@ class CronometroDialog:
         '''Cria a janela com os widgets e configura o label para ser atualizado
         com o tempo decorrido.'''
         ### Janela ###
-        self.root.title('%s - Atividade: %s' % (TITLE, self.atividade.nome))
+        self.root.title(u'%s - Atividade: %s' % (TITLE, self.atividade.nome))
         self.root.protocol('WM_DELETE_WINDOW', self.pararCb)
         self.root.iconname(TITLE)
         self.root.wm_attributes('-topmost', 1)
@@ -142,11 +142,11 @@ class CronometroDialog:
         atividadeLabel.pack(side='left', expand=True)
 
         self.tempoDecorridoLbl = tk.Label(mainFrame,
-                                 text=formatah(self.cronometro.decorridoh, True, False))
+                                 text=formatah(-self.cronometro.decorridoh, True))
         self.tempoDecorridoLbl.pack(side='left', expand=True)
         
         tempoSaldoLbl = tk.Label(mainFrame,
-                                 text='/ ' + formatah(self.atividade.saldo, False, True))
+                                 text='/ ' + formatah(self.atividade.saldo))
         tempoSaldoLbl.pack(side='left', expand=True)
 
         ### Buttons ###
@@ -440,7 +440,7 @@ def formatah(horas, segundos=False, sinal=True):
     '''formatah(horas, segundos=False, sinal=True) -> '[+-]HH:MM[:SS]'
     
     Recebe uma quantidade de horas como float e retorna uma string HH:MM.'''
-    if sinal:
+    if sinal and horas:
         sinal = '-' if (horas < 0) else '+'
     else:
         sinal = ''
@@ -631,12 +631,12 @@ def main():
                     debito = debitar(atividade, False)
         except FimAlcancadoWarning:
             debito = atividade.saldo
-            notificar('Você acabou de cumprir as horas da atividade:\n' +
+            notificar(u'Você acabou de cumprir as horas da atividade:\n' +
                       atividade.nome)
         except AttributeError, e: # usuário clicou em Sair, ou não... =/
             break
         finally:
-            if debito and perguntar('Confirma %s horas gastas com %s?' %
+            if debito and perguntar(u'Confirma %s horas gastas com %s?' %
                          (formatah(debito), atividade.nome)):
                 atividade.debitarh(debito)
             salvar_config(toth, inicio, timestamp)

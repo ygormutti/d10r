@@ -22,7 +22,8 @@ import datetime
 
 import gui
 import data
-from utils import formatah, combinar2
+from utils import formatah
+
 
 def calcula_prioridades(atividades):
     '''calcula_prioridades(atividades) -> dict
@@ -34,6 +35,7 @@ def calcula_prioridades(atividades):
         out[a] = len(atividades) - i
     return out
 
+
 def init():
     '''Inicializa o arquivo de configuração do d10r.'''
     gui.notificar('Obrigado por usar o d10r (este programa que vos fala).\n' +
@@ -43,7 +45,7 @@ def init():
     atividades = ler_atividades()
 
     ordprioridade = gui.prioridade_dialog(atividades)
-    
+
     if not ordprioridade:
         gui.notificar('Se você não sabe, não sou eu quem vai saber.' +
                   '\nMe execute de novo quando decidir. ;)')

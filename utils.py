@@ -31,30 +31,6 @@ def formatah(horas, segundos=False, sinal=True):
         return '%s%02d:%02d' % (sinal, int(h), int(m))
 
 
-def combinar2(itens):
-    '''combinar2(itens) -> lista de tuplas
-
-    Gera combinações simples dos itens tomados 2 a 2, sem repetições ou
-    combinações com a ordem trocada.'''
-    combinacoes = []
-    for a in itens:
-        for b in itens:
-            if a != b:
-                par = set()
-                par.add(a); par.add(b)
-                for p in combinacoes:
-                    if not p.difference(par): # se p for igual a par
-                        break
-                else:
-                    combinacoes.append(par)
-
-    for i, p in enumerate(combinacoes):
-        combinacoes[i] = tuple(p)
-
-    combinacoes.sort(key=lambda x: x[0] + x[1])
-    return combinacoes
-
-
 def dias_ate_prox_dia(dia, x):
     '''dias_ate_prox_dia(dia, x) -> int
 

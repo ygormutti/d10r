@@ -24,6 +24,15 @@ import gui
 import data
 from utils import formatah, combinar2
 
+def calcula_prioridades(atividades):
+    '''calcula_prioridades(atividades) -> dict
+
+    Calcula os pontos de prioridade a partir de uma lista com nomes de
+    atividades ordenada por ordem decrescente de prioridade.'''
+    out = {}
+    for i,a in enumerate(atividades):
+        out[a] = len(atividades) - i
+    return out
 
 def init():
     '''Inicializa o arquivo de configuração do d10r.'''
@@ -32,20 +41,15 @@ def init():
               ' a gerenciar o tempo que você deve gastar com cada atividade da' +
               ' sua rotina. Muita produtividade pra você!')
     atividades = ler_atividades()
-    pares = combinar2(atividades)
 
-    prioridades = {}
-    for i in atividades:
-        prioridades[i] = 1
+    ordprioridade = gui.prioridade_dialog(atividades)
+    
+    if not ordprioridade:
+        gui.notificar('Se você não sabe, não sou eu quem vai saber.' +
+                  '\nMe execute de novo quando decidir. ;)')
+        raise SystemExit(1)
 
-    for p in pares:
-            opcao = gui.escolher('Defina suas prioridades.\n' +
-                             'Qual é mais importante?', p)
-            if not opcao:
-                gui.notificar('Se você não sabe, não sou eu quem vai saber.' +
-                          '\nMe execute de novo quando decidir. ;)')
-                raise SystemExit(1)
-            prioridades[opcao] += 1
+    prioridades = calcula_prioridades(ordprioridade)
 
     toth = gui.entrar('Quantas horas semanais você deseja administrar?', True)
     if not toth:

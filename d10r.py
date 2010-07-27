@@ -144,14 +144,14 @@ O que deseja fazer?
 
 def debitar(atividade, parar=True):
     c = 'Cronômetro'
-    op = gui.menu('Deseja iniciar o cronômetro ou inserir diretamente a quantidade ' +
+    op = gui.menu('Deseja iniciar o cronômetro ou inserir a quantidade ' +
               'de horas cumpridas diretamente?', (c, 'Inserir'))
 
     if op == c:
         return gui.cronometro_dialog(atividade, parar)
     else:
         try:
-            h, m, s = gui.horaspin('Debitar:')
+            h, m, s = gui.horaspin('Atividade: %s' % atividade.nome)
             h += (m / 60.0) + (s / 3600.0)
             return h
         except TypeError:

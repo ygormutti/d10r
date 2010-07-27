@@ -143,6 +143,8 @@ class CronometroDialog:
 
 
 class HoraSpinDialog:
+    '''Diálogo com 3 Spinbox que permitem ao usuário especificar uma quantidade
+    de horas, minutos e segundos.'''
     def __init__(self, msg):
         self.msg = msg
         self.construir()
@@ -151,7 +153,7 @@ class HoraSpinDialog:
     def get(self):
         try:
             return (self.horas, self.minutos, self.segundos)
-        except NameError:
+        except AttributeError:
             return None
 
     def construir(self):
@@ -168,8 +170,8 @@ class HoraSpinDialog:
         lblsframe = tk.Frame(formframe)
         lblsframe.pack(side='left')
 
-        spinsframes = tk.Frame(formframe)
-        spinsframes.pack(side='left')
+        spinsframe = tk.Frame(formframe)
+        spinsframe.pack(side='left')
 
         horalbl = tk.Label(lblsframe, text='Horas: ')
         horalbl.pack()
@@ -180,17 +182,24 @@ class HoraSpinDialog:
         segundolbl = tk.Label(lblsframe, text='Segundos: ')
         segundolbl.pack()
 
-        self._horaspn = tk.Spinbox(spinsframes, values=range(100))
+        self._horaspn = tk.Spinbox(spinsframe, values=range(100))
         self._horaspn.pack()
 
-        self._minutospn = tk.Spinbox(spinsframes, values=range(100))
+        self._minutospn = tk.Spinbox(spinsframe, values=range(100))
         self._minutospn.pack()
 
-        self._segundospn = tk.Spinbox(spinsframes, values=range(100))
+        self._segundospn = tk.Spinbox(spinsframe, values=range(100))
         self._segundospn.pack()
 
-        okbtn = tk.Button(self.root, text='OK', command=self.okbtn_cb)
-        okbtn.pack()
+        dialogobtnframe = tk.Frame(self.root)
+        dialogobtnframe.pack(anchor=tk.E)
+
+        cancelarbtn = tk.Button(dialogobtnframe, command=self.fechar,
+                                text='Cancelar')
+        cancelarbtn.pack(side=tk.LEFT)
+
+        okbtn = tk.Button(dialogobtnframe, text='OK', command=self.okbtn_cb)
+        okbtn.pack(side=tk.LEFT)
 
     def okbtn_cb(self):
         self.horas = int(self._horaspn.get())
@@ -202,6 +211,100 @@ class HoraSpinDialog:
         self.root.quit()
         self.root.destroy()
 
+
+class PrioridadeDialog:
+    '''Janela que exibe uma lista com atividades e botões para que o usuário
+    possa ordená-las por ordem descrescente de prioridade.'''
+
+    def __init__(self, atividades):
+        '''atividades -> list
+
+        'atividades' é uma lista contendo os nomes das atividades.'''
+        self.construir(atividades)
+        self.root.mainloop()
+
+    def get(self):
+        return self.out
+
+    def construir(self, atividades):
+        self.root = tk.Tk()
+        self.root.title('%s - Prioridades' % TITLE)
+        self.root.protocol('WM_DELETE_WINDOW', self.fechar)
+
+        msg = u'Use os botões "Subir" e "Descer" para ordenar as atividades ' \
+              'listadas abaixo por ordem descrescente de prioridade (mais ' \
+              'importantes primeiro).'
+        msglbl = tk.Label(self.root, text=msg, wraplength=400,
+                          justify=tk.LEFT)
+        msglbl.pack()
+
+        ordenaframe = tk.Frame(self.root)
+        ordenaframe.pack(expand=True, fill=tk.BOTH)
+
+        listboxframe = tk.Frame(ordenaframe)
+        listboxframe.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+
+        self.listbox = tk.Listbox(listboxframe)
+        self.listbox.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+        for atividade in atividades:
+            self.listbox.insert(tk.END, atividade)
+        self.listbox.select_set(0)
+        # TODO: descobrir como setar a posição do maldito retângulo
+
+        scrollbar = tk.Scrollbar(listboxframe, orient=tk.VERTICAL,
+                                       command=self.listbox.yview)
+        self.listbox.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+
+        controleframe = tk.Frame(ordenaframe)
+        controleframe.pack(side=tk.LEFT, expand=False, anchor=tk.N)
+
+        subirbtn = tk.Button(controleframe, command=self.subirbtn_cb,
+                             text='Subir')
+        subirbtn.pack(fill=tk.X)
+
+        descerbtn = tk.Button(controleframe, command=self.descerbtn_cb,
+                              text='Descer')
+        descerbtn.pack(fill=tk.X)
+
+        dialogobtnsframe = tk.Frame(self.root)
+        dialogobtnsframe.pack(anchor=tk.E)
+
+        cancelarbtn = tk.Button(dialogobtnsframe, command=self.fechar,
+                                text='Cancelar')
+        cancelarbtn.pack(side=tk.RIGHT)
+
+        okbtn = tk.Button(dialogobtnsframe, command=self.okbtn_cb, text='OK')
+        okbtn.pack(side=tk.RIGHT)
+
+    def swapitems(self, x, y):
+        '''Troca a posição do item no índice x com o item no índice y.'''
+        self.listbox.insert(x, self.listbox.get(y))
+        self.listbox.delete(y+1)
+
+    def subirbtn_cb(self):
+        cur = int(self.listbox.curselection()[0])
+        if cur:
+            self.swapitems(cur-1, cur)
+        self.listbox.select_set(cur-1)
+        self.listbox.see(cur-1)
+
+    def descerbtn_cb(self):
+        cur = int(self.listbox.curselection()[0])
+        if cur < (self.listbox.size() - 1):
+            self.swapitems(cur, cur+1)
+        self.listbox.select_set(cur+1)
+        self.listbox.see(cur+1)
+
+    def okbtn_cb(self):
+        self.out = []
+        for i in range(self.listbox.size()):
+            self.out.append(self.listbox.get(i))
+        self.fechar()
+
+    def fechar(self):
+        self.root.quit()
+        self.root.destroy()
 
 def cronometro_dialog(atividade, parar=True):
     '''cronometroDialog(atividade) -> float
@@ -222,6 +325,9 @@ def horaspin(msg):
     h = HoraSpinDialog(msg)
     return h.get()
 
+def prioridade_dialog(atividades):
+    p = PrioridadeDialog(atividades)
+    return p.get()
 
 def notificar(msg):
     '''Exibe uma janela de diálogo com a mensagem em msg.'''

@@ -53,6 +53,8 @@ __all__ = ['ynbox'
 
 import sys, os, string, types, pickle,traceback
 
+from gui import ICON
+
 #--------------------------------------------------
 # check python version and take appropriate action
 #--------------------------------------------------
@@ -310,6 +312,7 @@ def buttonbox(msg="",title=" "
     boxRoot.iconname('Dialog')
     boxRoot.geometry(rootWindowPosition)
     boxRoot.minsize(400, 100)
+    boxRoot.wm_iconbitmap(ICON)
 
     # ------------- define the messageFrame ---------------------------------
     messageFrame = Frame(master=boxRoot)
@@ -541,6 +544,7 @@ def __multfillablebox(msg="Fill in values for the fields."
     boxRoot.iconname('Dialog')
     boxRoot.geometry(rootWindowPosition)
     boxRoot.bind("<Escape>", __multenterboxCancel)
+    boxRoot.wm_iconbitmap(ICON)
 
     # -------------------- put subframes in the boxRoot --------------------
     messageFrame = Frame(master=boxRoot)
@@ -706,6 +710,7 @@ def __fillablebox(msg
     boxRoot.iconname('Dialog')
     boxRoot.geometry(rootWindowPosition)
     boxRoot.bind("<Escape>", __enterboxCancel)
+    boxRoot.wm_iconbitmap(ICON)
 
     if image:
         image = os.path.normpath(image)
@@ -927,6 +932,7 @@ def __choicebox(msg
     boxRoot.minsize(root_width, root_height)
     rootWindowPosition = "+" + str(root_xpos) + "+" + str(root_ypos)
     boxRoot.geometry(rootWindowPosition)
+    boxRoot.wm_iconbitmap(ICON)
 
     # ---------------- put the frames in the window -----------------------------------------
     message_and_buttonsFrame = Frame(master=boxRoot)
@@ -1229,6 +1235,7 @@ def textbox(msg=""
     boxRoot.minsize(root_width, root_height)
     rootWindowPosition = "+" + str(root_xpos) + "+" + str(root_ypos)
     boxRoot.geometry(rootWindowPosition)
+    boxRoot.wm_iconbitmap(ICON)
 
     mainframe = Frame(master=boxRoot)
     mainframe.pack(side=TOP, fill=BOTH, expand=YES)
@@ -1370,6 +1377,7 @@ def diropenbox(msg=None
     """
     title=getFileDialogTitle(msg,title)
     boxRoot = Tk()
+    boxRoot.wm_iconbitmap(ICON)
     boxRoot.withdraw()
     if not default: default = None
     f = tk_FileDialog.askdirectory(
@@ -1519,6 +1527,7 @@ def fileopenbox(msg=None
     @arg filetypes: filemasks that a user can choose, e.g. "*.txt"
     """
     boxRoot = Tk()
+    boxRoot.wm_iconbitmap(ICON)
     boxRoot.withdraw()
 
     initialbase, initialfile, initialdir, filetypes = fileboxSetup(default,filetypes)
@@ -1568,6 +1577,7 @@ def filesavebox(msg=None
     """
 
     boxRoot = Tk()
+    boxRoot.wm_iconbitmap(ICON)
     boxRoot.withdraw()
 
     initialbase, initialfile, initialdir, filetypes = fileboxSetup(default,filetypes)

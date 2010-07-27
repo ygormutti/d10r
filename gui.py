@@ -1,17 +1,25 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-'''Módulo de interface gráfica do d10r
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+'''
+Módulo de interface gráfica
 
-Este módulo concentra(rá) todas as classes e funções relacionadas a GUI.
+Copyright (C) 2010  Ygor Mutti
+Licenciado sob GPLv3, com texto disponível no arquivo COPYING
 '''
 
 import time
 import threading
 import Tkinter as tk
 
-import easygui as eg
+from utils import formatah, plataforma, WINDOWS
 
-from utils import formatah
+
+ICON = 'icons/d10r.ico' if plataforma() == WINDOWS else '@icons/d10r.xbm'
+
+
+# FIXME: Como easygui utiliza ICON e gui utiliza easygui é preciso importar
+# depois da definição de ICON
+import easygui as eg
 
 
 TITLE = 'd10r'
@@ -70,18 +78,37 @@ class Cronometro(threading.Thread):
         return self._parado
 
 
+def root_config(delete, title=TITLE, iconname=TITLE, icon=ICON):
+    '''root_config(delete, title=TITLE, iconname=TITLE, icon=ICON) -> Tkinter.Tk
+    delete -> method
+    title -> str
+    icon -> str
+    iconname -> str
+
+    Configura o widget raiz. 'delete' é o método executado ao fechar a janela,
+    'title' é o título da janela; 'icon' é o caminh para o ícone que aparece no
+    canto da janela e 'iconname' é o nome que aparece na barra de tarefas.'''
+    root = tk.Tk()
+    root.title(title)
+    root.protocol(delete)
+    root.iconname(iconname)
+    root.wm_iconbitmap(ICON)
+    return root
+
+
 class CronometroDialog:
     '''Janela que exibe o nome de uma atividade, o tempo decorrido, o saldo e
     botões para que o usuário pause ou pare o cronômetro.'''
 
-    def __init__(self, atividade, root, parar=True):
+    def __init__(self, atividade, parar=True):
         self.atividade = atividade
         if parar:
             self.cronometro = Cronometro(atividade.saldo, True)
         else:
             self.cronometro = Cronometro(None)
-        self.root = root
         self.construir()
+        self.start()
+        self.root.mainloop()
 
     def start(self):
         if not self.cronometro.isAlive():
@@ -111,9 +138,9 @@ class CronometroDialog:
         '''Cria a janela com os widgets e configura o label para ser atualizado
         com o tempo decorrido.'''
         ### Janela ###
-        self.root.title(u'%s - Atividade: %s' % (TITLE, self.atividade.nome))
-        self.root.protocol('WM_DELETE_WINDOW', self.pararCb)
-        self.root.iconname(TITLE)
+        self.root = root_config(self.pararCb,
+                                u'%s - Atividade: %s' % (TITLE,
+                                                         self.atividade.nome))
         self.root.wm_attributes('-topmost', 1)
 
         ### Frames ###
@@ -157,9 +184,7 @@ class HoraSpinDialog:
             return None
 
     def construir(self):
-        self.root = tk.Tk()
-        self.root.title('%s - Debitar' % TITLE)
-        self.root.protocol('WM_DELETE_WINDOW', self.fechar)
+        self.root = root_config(self.fechar, '%s - Debitar' % TITLE)
 
         msglbl = tk.Label(self.root, text=self.msg)
         msglbl.pack()
@@ -227,9 +252,7 @@ class PrioridadeDialog:
         return self.out
 
     def construir(self, atividades):
-        self.root = tk.Tk()
-        self.root.title('%s - Prioridades' % TITLE)
-        self.root.protocol('WM_DELETE_WINDOW', self.fechar)
+        self.root = root_config(self.fechar, '%s - Prioridades' % TITLE)
 
         msg = u'Use os botões "Subir" e "Descer" para ordenar as atividades ' \
               'listadas abaixo por ordem descrescente de prioridade (mais ' \
@@ -312,10 +335,7 @@ def cronometro_dialog(atividade, parar=True):
     Fábrica de janelas de cronômetro. Retorna o tempo decorrido em horas desde a
     chamada da função. parar determina se o cronômetro deve parar quanto o tempo
     decorrido for igual ao saldo da atividade.'''
-    root = tk.Tk()
-    d = CronometroDialog(atividade, root, parar)
-    d.start()
-    root.mainloop()
+    d = CronometroDialog(atividade, parar)
     if atividade.saldo == d.cronometro.decorridoh:
         raise FimAlcancado
     return d.cronometro.decorridoh

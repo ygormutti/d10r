@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''
-Um utilitário para pessoas enroladas.
-
-O d10r permite que você defina atividades, quanto tempo disponível tem
-para realizá-las e atribua prioridades a elas, de acordo com as suas
-respostas a um questionário. Feito isso, o d10r calcula por quanto tempo
-você deve se ocupar com esta atividade semanalmente e conta o tempo que
-você já "pagou".
+Módulo de dados (persistência, modelos, etc)
 
 Copyright (C) 2010  Ygor Mutti
 Licenciado sob GPLv3, com texto disponível no arquivo COPYING

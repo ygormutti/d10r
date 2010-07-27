@@ -14,7 +14,7 @@ Licenciado sob GPLv3, com texto disponível no arquivo COPYING
 '''
 
 __author__ = 'Ygor Mutti <ygormutti@dcc.ufba.br>'
-__version__ = '0.1alpha'
+__version__ = '0.1beta'
 
 
 import shutil

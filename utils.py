@@ -1,17 +1,29 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''
-Um utilitário para pessoas enroladas.
-
-O d10r permite que você defina atividades, quanto tempo disponível tem
-para realizá-las e atribua prioridades a elas, de acordo com as suas
-respostas a um questionário. Feito isso, o d10r calcula por quanto tempo
-você deve se ocupar com esta atividade semanalmente e conta o tempo que
-você já "pagou".
+Funções e classes úteis e reutilizáveis
 
 Copyright (C) 2010  Ygor Mutti
 Licenciado sob GPLv3, com texto disponível no arquivo COPYING
 '''
+
+import sys
+
+
+WINDOWS = 'win'
+LINUX = 'linux'
+MAC = 'darwin'
+
+
+def plataforma():
+    '''plataforma() -> str
+
+    Descobre a plataforma em que o programa está rodando. Possíveis retornos são
+    WINDOWS, LINUX e MAC.'''
+    if sys.platform.startswith('win') or sys.platform.startswith('darwin'):
+        return sys.platform
+    return 'linux'
+
 
 def formatah(horas, segundos=False, sinal=True):
     '''formatah(horas, segundos=False, sinal=True) -> '[+-]HH:MM[:SS]'

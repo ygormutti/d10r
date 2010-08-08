@@ -251,7 +251,7 @@ class PrioridadeDialog:
     def get(self):
         try:
             return self.out
-        else AttributeError:
+        except AttributeError:
             return None
 
     def construir(self, atividades):
@@ -275,7 +275,7 @@ class PrioridadeDialog:
         for atividade in atividades:
             self.listbox.insert(tk.END, atividade)
         self.listbox.select_set(0)
-        # TODO: descobrir como setar a posição do maldito retângulo
+        self.listbox.activate(0)
 
         scrollbar = tk.Scrollbar(listboxframe, orient=tk.VERTICAL,
                                        command=self.listbox.yview)
@@ -310,17 +310,21 @@ class PrioridadeDialog:
 
     def subirbtn_cb(self):
         cur = int(self.listbox.curselection()[0])
+        curm1 = cur - 1
         if cur:
-            self.swapitems(cur-1, cur)
-        self.listbox.select_set(cur-1)
-        self.listbox.see(cur-1)
+            self.swapitems(curm1, cur)
+        self.listbox.select_set(curm1)
+        self.listbox.see(curm1)
+        self.listbox.activate(curm1)
 
     def descerbtn_cb(self):
         cur = int(self.listbox.curselection()[0])
+        curp1 = cur + 1
         if cur < (self.listbox.size() - 1):
-            self.swapitems(cur, cur+1)
-        self.listbox.select_set(cur+1)
-        self.listbox.see(cur+1)
+            self.swapitems(cur, curp1)
+        self.listbox.select_set(curp1)
+        self.listbox.see(curp1)
+        self.listbox.activate(curp1)
 
     def okbtn_cb(self):
         self.out = []
@@ -371,7 +375,8 @@ def entrar(msg, inteiro=False):
     Exibe uma janela com a mensagem em msg e uma caixa de texto para que o
     usuário informe alguma string.'''
     if inteiro:
-        return eg.integerbox(msg, TITLE, upperbound=168) # há 168h em uma semana
+        # há 168h em uma semana
+        return eg.integerbox(msg, TITLE, argUpperBound=168)
     return eg.enterbox(msg, TITLE)
 
 

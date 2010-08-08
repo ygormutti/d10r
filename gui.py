@@ -249,7 +249,10 @@ class PrioridadeDialog:
         self.root.mainloop()
 
     def get(self):
-        return self.out
+        try:
+            return self.out
+        else AttributeError:
+            return None
 
     def construir(self, atividades):
         self.root = root_config(self.fechar, '%s - Prioridades' % TITLE)
@@ -368,7 +371,7 @@ def entrar(msg, inteiro=False):
     Exibe uma janela com a mensagem em msg e uma caixa de texto para que o
     usuário informe alguma string.'''
     if inteiro:
-        return eg.integerbox(msg, TITLE)
+        return eg.integerbox(msg, TITLE, upperbound=168) # há 168h em uma semana
     return eg.enterbox(msg, TITLE)
 
 

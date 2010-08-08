@@ -20,9 +20,11 @@ def plataforma():
 
     Descobre a plataforma em que o programa está rodando. Possíveis retornos são
     WINDOWS, LINUX e MAC.'''
-    if sys.platform.startswith('win') or sys.platform.startswith('darwin'):
-        return sys.platform
-    return 'linux'
+    if sys.platform.startswith('win'):
+        return WINDOWS
+    elif sys.platform.startswith('darwin'):
+        return MAC
+    return LINUX
 
 
 def formatah(horas, segundos=False, sinal=True):

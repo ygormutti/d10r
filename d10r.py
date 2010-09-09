@@ -13,8 +13,8 @@ Copyright (C) 2010  Ygor Mutti
 Licenciado sob GPLv3, com texto disponível no arquivo COPYING
 '''
 
-__author__ = 'Ygor Mutti <ygormutti@dcc.ufba.br>'
-__version__ = '0.1beta'
+__author__ = 'Ygor Mutti <mamutti@icaju.com>'
+__version__ = '0.1'
 
 
 import shutil

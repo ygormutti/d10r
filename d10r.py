@@ -71,7 +71,10 @@ def init():
         pts = (prioridades[nome] * 1.0) / referencial
         data.Atividade(nome, pts, 0)
 
-    data.salvar_config(toth, datetime.date.today().isoweekday(), 0, acumular)
+    inicio = datetime.date.today().isoweekday()
+
+    data.creditar_tudo(toth, inicio, 0, acumular)
+    data.salvar_config(toth, inicio, datetime.date.today(), acumular)
 
     gui.notificar('Configurações salvas com sucesso.')
 

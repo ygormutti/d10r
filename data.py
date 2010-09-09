@@ -152,7 +152,7 @@ def salvar_config(toth, inicio, timestamp, acumular):
 
 def creditar_tudo(toth, inicio, timestamp, acumular):
     '''Verifica se existem horas a serem creditadas nas atividades e credita-as.'''
-    if timestamp == 0: # primeira execução após init
+    if timestamp == 0: # primeira execução
         vezes = 1
     else:
         vezes = dias_x_entre(inicio, timestamp, datetime.date.today())
@@ -163,9 +163,10 @@ def creditar_tudo(toth, inicio, timestamp, acumular):
         # timestamp, sendo que as horas daquele dia já foram creditadas, daí:
         if timestamp.isoweekday() == inicio:
         	vezes -= 1
-    for a in Atividade.all():
-        if a.saldo > 0 and not acumular:
-            a.saldo = 0
-        a.creditarh(toth, vezes)
+    if vezes:
+        for a in Atividade.all():
+            if a.saldo > 0 and not acumular:
+                a.saldo = 0
+            a.creditarh(toth, vezes)
 
     return bool(vezes)

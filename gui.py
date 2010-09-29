@@ -150,7 +150,7 @@ class CronometroDialog:
 
         ### Labels ###
 
-        atividadeLabel = tk.Label(mainFrame, text='Decorrido/Saldo: ', justify='left')
+        atividadeLabel = tk.Label(mainFrame, text='Progresso: ', justify='left')
         atividadeLabel.pack(side='left', expand=True)
 
         self.tempoDecorridoLbl = tk.Label(mainFrame,
@@ -165,7 +165,7 @@ class CronometroDialog:
         pausarBtn = tk.Checkbutton(mainFrame, text='Pausar', command=self.pausarCb)
         pausarBtn.pack(side='left')
 
-        pararBtn = tk.Button(mainFrame, text='Finalizar', command=self.pararCb)
+        pararBtn = tk.Button(mainFrame, text='Encerrar', command=self.pararCb)
         pararBtn.pack(side='left')
 
 

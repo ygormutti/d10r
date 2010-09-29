@@ -156,13 +156,15 @@ def creditar_tudo(toth, inicio, timestamp, acumular):
         vezes = 1
     else:
         vezes = dias_x_entre(inicio, timestamp, datetime.date.today())
-        if vezes and not acumular:
-            vezes = 1
         # se o timestamp corresponde ao dia da semana de inicio da contagem
         # a funcao dias_x_entre contará, além do esperado, o próprio dia do
         # timestamp, sendo que as horas daquele dia já foram creditadas, daí:
         if timestamp.isoweekday() == inicio:
-        	vezes -= 1
+            vezes -= 1
+
+        if vezes and not acumular:
+            vezes = 1
+    print vezes
     if vezes:
         for a in Atividade.all():
             if a.saldo > 0 and not acumular:
